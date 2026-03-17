@@ -43,30 +43,32 @@ class AVLTree:
         node.right = self.rotate_right(node.right)
         return self.rotate_left(node)
 
-    def insert(self, node, id):
+
+    #elegi que el nodo se cree antes de intentar insertarlo y se usa self.root = self.insert(self.root, new_node)
+    def insert(self, node, new_node):
         if node is None:
-            return Node(id)
-        if id < node.course_id:
-            node.left = self.insert(node.left, id)
-        elif id > node.course_id:
-            node.right = self.insert(node.right, id)
+            return new_node
+        if new_node.satisfaction < node.satisfaction:
+            node.left = self.insert(node.left, new_node)
+        elif new_node.satisfaction > node.satisfaction:
+            node.right = self.insert(node.right, new_node)
         else:
-            print("Error: Course ID already exists")
-            return node
+            if new_node.course_id < node.course_id:
+                node.left = self.insert(node.left, new_node)
+            elif new_node.course_id > node.course_id:
+                node.right = self.insert(node.right, new_node)
+            else:
+                return node
         self.update_height(node)
         balance =self.get_balance(node)
-        if balance == 2 and self.get_balance(node.left) == 1:
+        if balance > 1 and self.get_balance(node.left) >= 0:
             return self.rotate_right(node)
-        elif balance == -2 and self.get_balance(node.right) == -1:
+        if balance < -1 and self.get_balance(node.right) <= 0:
             return self.rotate_left(node)
-        if balance == 2 and self.get_balance(node.left) == -1:
+        if balance > 1 and self.get_balance(node.left) < 0:
             node.left = self.rotate_left(node.left)
             return self.rotate_right(node)
-        elif balance == -2 and self.get_balance(node.right) == 1:
+        if balance < -1 and self.get_balance(node.right) > 0:
             node.right = self.rotate_right(node.right)
             return self.rotate_left(node)
         return node
-        
-        
-
-    
