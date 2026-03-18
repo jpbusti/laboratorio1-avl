@@ -72,3 +72,35 @@ class AVLTree:
             node.right = self.rotate_right(node.right)
             return self.rotate_left(node)
         return node
+    
+    def get_min_node(self, node):
+        current = node
+        while current.left is not None:
+            current = current.left
+        return current
+    
+    def delete(self, node, course_id, satisfaction=None):
+        if node is None:
+            return None
+        if satisfaction is not None:
+            if satisfaction < node.satisfaction:
+                node.left = self.delete(node.left, course_id, satisfaction)
+            elif satisfaction > node.satisfaction:
+                node.right = self.delete(node.right, course_id, satisfaction)
+            else:
+                if course_id < node.course_id:
+                    node.left = self.delete(node.left, course_id, satisfaction)
+                elif course_id > node.course_id:
+                    node.right = self.delete(node.right, course_id, satisfaction)
+                else:
+                    node = self._remove_node(node)
+        else:
+            node.left = self.delete(node.left, course_id)
+            node.right = self.delete(node.right, course_id)
+            if node.course_id == course_id:
+                node = self._remove_node(node)
+
+        if node is None:
+            return None
+
+        return self.rebalance(node)
