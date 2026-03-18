@@ -104,3 +104,35 @@ class AVLTree:
             return None
 
         return self.rebalance(node)
+    
+    def search_by_satisfaction(self, node, satisfaction, result=None):
+        if result is None:
+            result = []
+        if node is None:
+            return result
+        self.search_by_satisfaction(node.left, satisfaction, result)
+        if node.satisfaction == satisfaction:
+            result.append(node)
+        self.search_by_satisfaction(node.right, satisfaction, result)
+        return result
+        
+    def search_by_id(self, node, course_id):
+        if node is None:
+            return None
+        if node.course_id == course_id:
+            return node
+    # buscar en izquierda
+        left_result = self.search_by_id(node.left, course_id)
+        if left_result:
+            return left_result
+    # buscar en derecha
+        return self.search_by_id(node.right, course_id)
+    
+    def search(self, node, course_id=None, satisfaction=None):
+        if node is None:
+            return None
+        if satisfaction is not None:
+            return self.search_by_satisfaction(node, satisfaction)
+        elif course_id is not None:
+            return self.search_by_id(node, course_id)
+        return None
