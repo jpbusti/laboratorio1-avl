@@ -93,46 +93,95 @@ class AVLTree:
                 elif course_id > node.course_id:
                     node.right = self.delete(node.right, course_id, satisfaction)
                 else:
-                    node = self._remove_node(node)
+                    node = self.remove_node(node)
         else:
             node.left = self.delete(node.left, course_id)
             node.right = self.delete(node.right, course_id)
             if node.course_id == course_id:
-                node = self._remove_node(node)
+                node = self.remove_node(node)
 
         if node is None:
             return None
 
         return self.rebalance(node)
     
-    def search_by_satisfaction(self, node, satisfaction, result=None):
-        if result is None:
-            result = []
+    def remove_node(self, node):
+        # Caso 1: nodo hoja
+        if node.left is None and node.right is None:
+            return None
+
+        # Caso 2: un solo hijo
+        if node.left is None:
+            return node.right
+        if node.right is None:
+            return node.left
+
+        # Caso 3: dos hijos
+        sucesor = self.get_min_node(node.right)
+
+        node.course_id              = sucesor.course_id
+        node.title                  = sucesor.title
+        node.satisfaction           = sucesor.satisfaction
+        node.rating                 = sucesor.rating
+        node.num_reviews            = sucesor.num_reviews
+        node.num_published_lectures = sucesor.num_published_lectures
+        node.created                = sucesor.created
+        node.last_update_date       = sucesor.last_update_date
+        node.duration               = sucesor.duration
+        node.instructors_id         = sucesor.instructors_id
+        node.image                  = sucesor.image
+        node.positive_reviews       = sucesor.positive_reviews
+        node.negative_reviews       = sucesor.negative_reviews
+        node.neutral_reviews        = sucesor.neutral_reviews
+
+        node.right = self.delete(node.right, sucesor.course_id, sucesor.satisfaction)
+
+        return node
+    
+    def rebalance(self, node):
+        self.update_height(node)
+        balance = self.get_balance(node)
+
+        if balance > 1 and self.get_balance(node.left) >= 0:
+            return self.rotate_right(node)
+        if balance < -1 and self.get_balance(node.right) <= 0:
+            return self.rotate_left(node)
+        if balance > 1 and self.get_balance(node.left) < 0:
+            return self.rotate_left_right(node)
+        if balance < -1 and self.get_balance(node.right) > 0:
+            return self.rotate_right_left(node)
+
+        return node
+    
+    def delete_course(self, course_id, satisfaction=None):
+        self.root = self.delete(self.root, course_id, satisfaction)
+    
+    def search_by_satisfaction(self, node, satisfaction):
         if node is None:
-            return result
-        self.search_by_satisfaction(node.left, satisfaction, result)
-        if node.satisfaction == satisfaction:
-            result.append(node)
-        self.search_by_satisfaction(node.right, satisfaction, result)
-        return result
+            return None
+        if satisfaction < node.satisfaction:
+            return self.search_by_satisfaction(node.left, satisfaction)
+        elif satisfaction > node.satisfaction:
+            return self.search_by_satisfaction(node.right, satisfaction)
+        else:
+            return node
         
     def search_by_id(self, node, course_id):
         if node is None:
             return None
         if node.course_id == course_id:
             return node
-    # buscar en izquierda
-        left_result = self.search_by_id(node.left, course_id)
-        if left_result:
-            return left_result
-    # buscar en derecha
+        r = self.search_by_id(node.left, course_id)
+        if r is not None:
+            return r
         return self.search_by_id(node.right, course_id)
     
-    def search(self, node, course_id=None, satisfaction=None):
-        if node is None:
-            return None
-        if satisfaction is not None:
-            return self.search_by_satisfaction(node, satisfaction)
-        elif course_id is not None:
-            return self.search_by_id(node, course_id)
-        return None
+    def search_course_by_id(self, course_id):
+        return self.search_by_id(self.root, course_id)
+
+    def search_course_by_satisfaction(self, satisfaction):
+        return self.search_by_satisfaction(self.root, satisfaction)
+
+
+            
+    "aaa"
