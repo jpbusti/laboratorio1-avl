@@ -1,4 +1,4 @@
-from node import Node
+from .node import Node
 
 class AVLTree:
     def __init__(self):
@@ -185,3 +185,23 @@ class AVLTree:
 
             
     "aaa"
+
+    def height(self, node):
+        if node is None:
+            return 0
+        return 1 + max(self.height(node.left), self.height(node.right))
+
+    def print_level(self, node, level):
+        if node is None:
+            return
+    
+        if level == 1:
+            print(node.course_id, end=" ")
+        elif level > 1:
+            self.print_level(node.left, level - 1)
+            self.print_level(node.right, level - 1)
+
+    def level_order(self):
+        h = self.height(self.root)
+        for i in range(1, h + 1):
+            self.print_level(self.root, i)
