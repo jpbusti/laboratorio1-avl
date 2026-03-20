@@ -1,0 +1,36 @@
+import csv
+import os
+ 
+ruta_csv = os.path.join(os.path.dirname(__file__), 'dataset_courses_with_reviews.csv')
+ 
+with open(ruta_csv, newline='', encoding='utf-8') as f:
+    reader = csv.DictReader(f)
+    rows = list(reader)
+ 
+for row in rows:
+    rating = float(row['rating'])
+    num_reviews = float(row['num_reviews'])
+    positive = float(row['positive_reviews'])
+    neutral = float(row['neutral_reviews'])
+    negative = float(row['negative_reviews'])
+ 
+    if num_reviews > 0:
+        row['satisfaction'] = round(
+            rating * 0.7 +
+            ((5 * positive + 3 * neutral + negative) / num_reviews) * 0.3,
+            5
+        )
+    else:
+        row['satisfaction'] = 0.0
+ 
+fieldnames = list(rows[0].keys())
+ 
+ruta_salida = os.path.join(os.path.dirname(__file__), 'courses_with_satisfaction.csv')
+ 
+with open(ruta_salida, 'w', newline='', encoding='utf-8') as f:
+    writer = csv.DictWriter(f, fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerows(rows)
+ 
+print("Listo! Filas procesadas:", len(rows))
+ 
