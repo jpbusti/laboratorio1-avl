@@ -1,4 +1,4 @@
-from node import Node
+from .node import Node
 
 def get_all_nodes(node, result=None):
     if result is None:

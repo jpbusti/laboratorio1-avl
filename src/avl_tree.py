@@ -191,17 +191,22 @@ class AVLTree:
             return 0
         return 1 + max(self.height(node.left), self.height(node.right))
 
-    def print_level(self, node, level):
+    def print_level(self, node, level, list=None):
         if node is None:
             return
-    
-        if level == 1:
-            print(node.course_id, end=" ")
-        elif level > 1:
-            self.print_level(node.left, level - 1)
-            self.print_level(node.right, level - 1)
+        if list is None:
+            list = []
 
+        if level == 1:
+            list.append(node.course_id)
+        elif level > 1:
+            self.print_level(node.left, level - 1, list)
+            self.print_level(node.right, level - 1, list)
+        return list
+    
     def level_order(self):
         h = self.height(self.root)
+        list = []
         for i in range(1, h + 1):
-            self.print_level(self.root, i)
+            list.append(self.print_level(self.root, i))
+        return list
