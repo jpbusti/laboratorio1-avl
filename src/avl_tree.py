@@ -4,6 +4,16 @@ class AVLTree:
     def __init__(self):
         self.root = None
 
+    def get_level(self, root, target, level=0):
+        if root is None:
+            return -1
+        if root == target:
+            return level
+        left = self.get_level(root.left, target, level+1)
+        if left != -1:
+            return left
+        return self.get_level(root.right, target, level+1)
+
     def get_height(self, node):
         if node is None:
             return 0
