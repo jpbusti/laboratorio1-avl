@@ -100,7 +100,7 @@ class Interfaz:
         frame = ctk.CTkFrame(self.main_frame)
         frame.pack(expand=True)
 
-        ctk.CTkLabel(frame, text="Eliminar Curso (ID)").pack(pady=10)
+        ctk.CTkLabel(frame, text="Eliminar Curso (ID)", font=("Arial", 25)).pack(pady=10)
         self.delete_entry = ctk.CTkEntry(frame)
         self.delete_entry.pack(pady=10)
 
@@ -123,11 +123,11 @@ class Interfaz:
         frame = ctk.CTkFrame(self.main_frame)
         frame.pack(expand=True)
 
-        ctk.CTkLabel(frame, text="Buscar Curso (ID)").pack(pady=5)
+        ctk.CTkLabel(frame, text="Buscar Curso (ID)", font=("Arial", 25)).pack(pady=5)
         self.search_entry = ctk.CTkEntry(frame)
         self.search_entry.pack(pady=5)
 
-        ctk.CTkLabel(frame, text="Buscar por satisfacción").pack(pady=5)
+        ctk.CTkLabel(frame, text="Buscar por satisfacción", font=("Arial", 25)).pack(pady=5)
         self.search_sat_entry = ctk.CTkEntry(frame)
         self.search_sat_entry.pack(pady=5)
 
