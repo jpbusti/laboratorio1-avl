@@ -24,7 +24,10 @@ class Node:
         self.num_published_lectures = int(num_published_lectures)
         self.created                = created
         self.last_update_date       = last_update_date
-        self.duration               = float(duration) if duration else 0.0
+        try:
+            self.duration = float(str(duration).split()[0])
+        except:
+            self.duration = 0.0
         self.instructors_id         = instructors_id
         self.image                  = image
         self.positive_reviews       = int(positive_reviews)
