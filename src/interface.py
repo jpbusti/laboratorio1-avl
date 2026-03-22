@@ -14,60 +14,42 @@ ctk.set_default_color_theme("blue")
 
 class Interfaz:
     def __init__(self, tree, df):
-        self.tree         = tree
-        self.df           = df
-        self.visualizer   = visualizer()
+        self.tree = tree
+        self.df = df
+        self.visualizer = visualizer()
         self.current_node = None
 
         self.root = ctk.CTk()
         self.root.title("Sistema de Cursos - AVL")
-        self.root.geometry("900x600")
+        self.root.geometry("1000x650")
 
-        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_rowconfigure(1, weight=1)
         self.root.grid_columnconfigure(1, weight=1)
 
         self.sidebar = ctk.CTkFrame(self.root, width=200)
-        self.sidebar.grid(row=0, column=0, sticky="ns")
+        self.sidebar.grid(row=0, column=0, rowspan=2, sticky="ns")
+
+        self.header = ctk.CTkFrame(self.root, height=60)
+        self.header.grid(row=0, column=1, sticky="ew")
 
         self.main_frame = ctk.CTkFrame(self.root)
-        self.main_frame.grid(row=0, column=1, sticky="nsew")
+        self.main_frame.grid(row=1, column=1, sticky="nsew")
 
+        self.create_header()
         self.create_sidebar()
         self.create_main_menu()
 
-    # ── Buscar curso en el CSV ────────────────────────────────────────
-
-    def get_course_by_id(self, course_id):
-        fila = self.df[self.df["id"] == course_id]
-        if fila.empty:
-            return None
-        curso = fila.iloc[0]
-        return Node(
-            course_id              = int(curso["id"]),
-            title                  = curso["title"],
-            url                    = curso["url"],
-            rating                 = curso["rating"],
-            num_reviews            = curso["num_reviews"],
-            num_published_lectures = curso["num_published_lectures"],
-            created                = curso["created"],
-            last_update_date       = curso["last_update_date"],
-            duration               = curso["duration"],
-            instructors_id         = curso["instructors_id"],
-            image                  = curso["image"],
-            positive_reviews       = curso["positive_reviews"],
-            negative_reviews       = curso["negative_reviews"],
-            neutral_reviews        = curso["neutral_reviews"],
-        )
-
-    # ── Sidebar ───────────────────────────────────────────────────────
+    def create_header(self):
+        ctk.CTkLabel(self.header, text="Sistema de Cursos AVL",
+                     font=("Arial", 22, "bold")).pack(side="left", padx=20)
 
     def create_sidebar(self):
         ctk.CTkLabel(self.sidebar, text="Menú", font=("Arial", 20)).pack(pady=20)
         botones = [
-            ("Insertar",   self.insert_form),
-            ("Eliminar",   self.delete_form),
-            ("Buscar",     self.search_form),
-            ("Recorrido",  self.show_levels),
+            ("Insertar", self.insert_form),
+            ("Eliminar", self.delete_form),
+            ("Buscar", self.search_form),
+            ("Recorrido", self.show_levels),
             ("Visualizar", self.visualize),
         ]
         for texto, comando in botones:
@@ -77,347 +59,340 @@ class Interfaz:
     def clear_main(self):
         for widget in self.main_frame.winfo_children():
             widget.destroy()
+        self.content = ctk.CTkFrame(self.main_frame)
+        self.content.pack(fill="both", expand=True, padx=40, pady=30)
 
-    # ── Menú principal ────────────────────────────────────────────────
+    def create_section(self, title):
+        frame = ctk.CTkFrame(self.content)
+        frame.pack(expand=True)
+        ctk.CTkLabel(frame, text=title,
+                 font=("Arial", 28, "bold")).pack(pady=20)
+        sub = ctk.CTkFrame(frame)
+        sub.pack(pady=10, padx=20)
+        return sub
 
     def create_main_menu(self):
         self.clear_main()
-        frame = ctk.CTkFrame(self.main_frame)
+        frame = ctk.CTkFrame(self.content)
         frame.pack(expand=True)
-        ctk.CTkLabel(frame, text="Menú Principal", font=("Arial", 40)).pack(pady=20)
-        ctk.CTkLabel(frame, text="Selecciona una opción del menú lateral").pack(pady=10)
+        ctk.CTkLabel(frame, text=" Sistema de Cursos AVL ",
+                 font=("Arial", 36, "bold")).pack(pady=20)
+        ctk.CTkLabel(frame,
+                 text="Gestión de cursos usando árbol AVL",
+                 font=("Arial", 16)).pack(pady=10)
+        stats = ctk.CTkFrame(frame)
+        stats.pack(pady=20)
+        total = self.count_nodes(self.tree.root)
+        ctk.CTkLabel(stats, text=f"Nodos en árbol: {total}",
+                 font=("Arial", 18)).pack(padx=20, pady=10)
 
-    # ── Insertar ──────────────────────────────────────────────────────
+    def get_course_by_id(self, course_id):
+        fila = self.df[self.df["id"] == course_id]
+        if fila.empty:
+            return None
+        curso = fila.iloc[0]
+        return Node(
+            int(curso["id"]),
+            curso["title"],
+            curso["url"],
+            curso["rating"],
+            curso["num_reviews"],
+            curso["num_published_lectures"],
+            curso["created"],
+            curso["last_update_date"],
+            curso["duration"],
+            curso["instructors_id"],
+            curso["image"],
+            curso["positive_reviews"],
+            curso["negative_reviews"],
+            curso["neutral_reviews"],
+        )
 
     def insert_form(self):
         self.clear_main()
-        frame = ctk.CTkFrame(self.main_frame)
-        frame.pack(expand=True)
-        ctk.CTkLabel(frame, text="Insertar Curso por ID", font=("Arial", 25)).pack(pady=20)
-        self.entry_id = ctk.CTkEntry(frame, placeholder_text="ID del curso")
+        frame = self.create_section("Insertar Curso")
+        ctk.CTkLabel(frame, text="Ingrese el ID del curso").pack(pady=5)
+        self.entry_id = ctk.CTkEntry(frame, width=250)
         self.entry_id.pack(pady=10)
-        ctk.CTkButton(frame, text="Insertar", command=self.insert_node).pack(pady=10)
-        ctk.CTkButton(frame, text="Volver",   command=self.create_main_menu).pack(pady=10)
+        ctk.CTkButton(frame, text="Insertar",
+                  command=self.insert_node,
+                  width=200).pack(pady=10)
 
     def insert_node(self):
         try:
             node_id = int(self.entry_id.get())
             if self.tree.search_by_id(self.tree.root, node_id):
-                messagebox.showerror("Error", "El curso ya está en el árbol")
+                messagebox.showerror("Error", "Ya existe")
                 return
             node = self.get_course_by_id(node_id)
             if node is None:
-                messagebox.showerror("Error", "No se encontró el curso en el dataset")
+                messagebox.showerror("Error", "No encontrado")
                 return
             self.tree.root = self.tree.insert(self.tree.root, node)
-            messagebox.showinfo("Éxito", f"Curso '{node.title}' insertado correctamente")
+            messagebox.showinfo("Éxito", "Insertado")
             self.visualize()
-        except Exception as e:
-            messagebox.showerror("Error", f"Error: {str(e)}")
-
-    # ── Eliminar ──────────────────────────────────────────────────────
+        except:
+            messagebox.showerror("Error", "Dato inválido")
 
     def delete_form(self):
         self.clear_main()
-        frame = ctk.CTkFrame(self.main_frame)
-        frame.pack(expand=True)
-        ctk.CTkLabel(frame, text="Eliminar Curso", font=("Arial", 25)).pack(pady=10)
-
-        ctk.CTkLabel(frame, text="Eliminar por ID:").pack()
-        self.delete_id_entry = ctk.CTkEntry(frame, placeholder_text="ID del curso")
+        frame = self.create_section("Eliminar Curso")
+        ctk.CTkLabel(frame, text="Eliminar por ID").pack()
+        self.delete_id_entry = ctk.CTkEntry(frame, width=250)
         self.delete_id_entry.pack(pady=5)
-
-        ctk.CTkLabel(frame, text="O eliminar por satisfacción:").pack()
-        self.delete_sat_entry = ctk.CTkEntry(frame, placeholder_text="Satisfacción")
+        ctk.CTkLabel(frame, text="O por satisfacción").pack()
+        self.delete_sat_entry = ctk.CTkEntry(frame, width=250)
         self.delete_sat_entry.pack(pady=5)
-
-        ctk.CTkButton(frame, text="Eliminar", command=self.delete_node).pack(pady=10)
-        ctk.CTkButton(frame, text="Volver",   command=self.create_main_menu).pack(pady=5)
+        ctk.CTkButton(frame, text="Eliminar",
+                  command=self.delete_node).pack(pady=10)
 
     def delete_node(self):
         try:
-            id_text  = self.delete_id_entry.get().strip()
+            id_text = self.delete_id_entry.get().strip()
             sat_text = self.delete_sat_entry.get().strip()
 
             if id_text and sat_text:
-                messagebox.showerror("Error", "Ingrese solo uno: ID o satisfacción")
                 return
+
             if id_text:
                 course_id = int(id_text)
                 if not self.tree.search_by_id(self.tree.root, course_id):
-                    messagebox.showerror("Error", "El curso no está en el árbol")
                     return
                 self.tree.delete_course(course_id)
-                messagebox.showinfo("Éxito", f"Curso {course_id} eliminado")
+
             elif sat_text:
                 satisfaction = float(sat_text)
                 nodo = self.tree.search_by_satisfaction(self.tree.root, satisfaction)
                 if nodo is None:
-                    messagebox.showerror("Error", "No se encontró curso con esa satisfacción")
                     return
                 self.tree.delete_course(nodo.course_id, satisfaction)
-                messagebox.showinfo("Éxito", f"Curso eliminado")
-            else:
-                messagebox.showerror("Error", "Ingrese un valor")
-                return
-            self.visualize()
-        except Exception as e:
-            messagebox.showerror("Error", f"Error: {str(e)}")
 
-    # ── Buscar ────────────────────────────────────────────────────────
+            self.visualize()
+
+        except:
+            pass
 
     def search_form(self):
         self.clear_main()
-        frame = ctk.CTkFrame(self.main_frame)
-        frame.pack(expand=True)
-
-        ctk.CTkLabel(frame, text="Buscar por ID:", font=("Arial", 16)).pack(pady=5)
-        self.search_id_entry = ctk.CTkEntry(frame, placeholder_text="ID del curso")
+        frame = self.create_section("Buscar Curso")
+        ctk.CTkLabel(frame, text="Buscar por ID").pack()
+        self.search_id_entry = ctk.CTkEntry(frame, width=250)
         self.search_id_entry.pack(pady=5)
-
-        ctk.CTkLabel(frame, text="Buscar por satisfacción:", font=("Arial", 16)).pack(pady=5)
-        self.search_sat_entry = ctk.CTkEntry(frame, placeholder_text="Satisfacción")
+        ctk.CTkLabel(frame, text="Buscar por satisfacción").pack()
+        self.search_sat_entry = ctk.CTkEntry(frame, width=250)
         self.search_sat_entry.pack(pady=5)
-
         ctk.CTkButton(frame, text="Buscar nodo",
-                      command=self.search_node).pack(pady=5)
-        ctk.CTkButton(frame, text="Búsqueda por criterios",
-                      command=self.search_by_criteria).pack(pady=5)
-        ctk.CTkButton(frame, text="Volver",
-                      command=self.create_main_menu).pack(pady=10)
+                  command=self.search_node).pack(pady=10)
+        
+        ctk.CTkButton(frame, text="Búsqueda avanzada",
+                  command=self.search_by_criteria).pack(pady=5)
+        self.criteria_option = ctk.CTkOptionMenu(
+    frame,
+        values=[
+    "Reseñas positivas > negativas + neutras",
+    "Cursos después de una fecha",
+    "Rango de número de clases",
+    "Reseñas por encima del promedio"
+        ],
+        command=self.update_criteria_inputs
+)
+        self.criteria_option.pack(pady=10)
+
+        self.criteria_frame = ctk.CTkFrame(frame)
+        self.criteria_frame.pack(pady=10)
+
+    def update_criteria_inputs(self, option):
+        # limpiar inputs anteriores
+        for widget in self.criteria_frame.winfo_children():
+            widget.destroy()
+
+        if option == "Cursos después de una fecha":
+            ctk.CTkLabel(self.criteria_frame, text="Fecha (YYYY-MM-DD)").pack()
+            self.date_entry = ctk.CTkEntry(self.criteria_frame, width=200)
+            self.date_entry.pack(pady=5)
+
+        elif option == "Rango de número de clases":
+            ctk.CTkLabel(self.criteria_frame, text="Min lecturas").pack()
+            self.min_lectures_entry = ctk.CTkEntry(self.criteria_frame, width=200)
+            self.min_lectures_entry.pack(pady=5)
+
+            ctk.CTkLabel(self.criteria_frame, text="Max lecturas").pack()
+            self.max_lectures_entry = ctk.CTkEntry(self.criteria_frame, width=200)
+            self.max_lectures_entry.pack(pady=5)
+
+        elif option == "Reseñas por encima del promedio":
+            ctk.CTkLabel(self.criteria_frame, text="Tipo de review").pack()
+            self.review_type_option = ctk.CTkOptionMenu(
+                self.criteria_frame,
+                values=["positive", "negative", "neutral"]
+            )
+            self.review_type_option.pack(pady=5)
 
     def search_node(self):
-        try:
-            id_text  = self.search_id_entry.get().strip()
-            sat_text = self.search_sat_entry.get().strip()
-
-            if id_text and sat_text:
-                messagebox.showerror("Error", "Ingrese solo uno")
-                return
-
-            result = None
-            if id_text:
-                result = self.tree.search_by_id(self.tree.root, int(id_text))
-            elif sat_text:
-                result = self.tree.search_by_satisfaction(self.tree.root, float(sat_text))
-            else:
-                messagebox.showerror("Error", "Ingrese un valor")
-                return
-
-            if result:
-                self.current_node = result
-                self.show_node_options()
-            else:
-                messagebox.showinfo("Resultado", "Curso no encontrado")
-        except Exception as e:
-            messagebox.showerror("Error", f"Error: {str(e)}")
+        node_id = self.search_id_entry.get()
+        sat = self.search_sat_entry.get()
+        node = None
+        if node_id:
+            try:
+                node = self.tree.search_course_by_id(int(node_id))
+            except:
+                node = None
+        elif sat:
+            try:
+                node = self.tree.search_course_by_satisfaction(float(sat))
+            except:
+                node = None
+        if node:
+            self.current_node = node
+            self.show_node_options()
+        else:
+            self.show_result("Nodo no encontrado")
 
     def show_node_options(self):
         self.clear_main()
-        frame = ctk.CTkFrame(self.main_frame)
+
+        frame = ctk.CTkFrame(self.content)
         frame.pack(fill="both", expand=True, padx=20, pady=20)
 
-        ctk.CTkLabel(frame, text="Nodo encontrado", font=("Arial", 25)).pack(pady=10)
-        ctk.CTkLabel(frame,
-                     text=f"ID: {self.current_node.course_id} | "
-                          f"Satisfacción: {self.current_node.satisfaction}").pack(pady=5)
+        ctk.CTkLabel(frame, text=f"Curso: {self.current_node.course_id}").pack(pady=10)
 
-        opciones = [
-            ("Ver información completa", self.show_full_info),
-            ("Obtener nivel",            self.show_level),
-            ("Factor de balanceo",       self.show_balance),
-            ("Padre",                    self.show_parent),
-            ("Abuelo",                   self.show_grandparent),
-            ("Tío",                      self.show_uncle),
-        ]
-        for texto, comando in opciones:
-            ctk.CTkButton(frame, text=texto, command=comando)\
-                .pack(pady=4, fill="x", padx=50)
+        self.result_box = ctk.CTkTextbox(frame, height=120)
+        self.result_box.pack(fill="x", padx=10, pady=5)
 
-        self.result_box = ctk.CTkTextbox(frame, height=150)
-        self.result_box.pack(fill="both", expand=True, pady=10)
-        ctk.CTkButton(frame, text="Volver", command=self.create_main_menu).pack(pady=10)
+        ctk.CTkButton(frame, text="a. Ver información completa",
+                  command=self.show_full_info).pack(pady=5)
 
+        ctk.CTkButton(frame, text="b. Nivel del nodo",
+                  command=self.show_level).pack(pady=5)
+
+        ctk.CTkButton(frame, text="c. Factor de balance",
+                  command=self.show_balance).pack(pady=5)
+
+        ctk.CTkButton(frame, text="d. Padre",
+                  command=self.show_parent).pack(pady=5)
+
+        ctk.CTkButton(frame, text="e. Abuelo",
+                  command=self.show_grandparent).pack(pady=5)
+
+        ctk.CTkButton(frame, text="f. Tío",
+                  command=self.show_uncle).pack(pady=5)
+
+        ctk.CTkButton(frame, text="Volver",
+                  command=self.search_form).pack(pady=10)
+        
     def show_full_info(self):
         n = self.current_node
-        info = (
-            f"ID:                   {n.course_id}\n"
-            f"Título:               {n.title}\n"
-            f"URL:                  {n.url}\n"
-            f"Rating:               {n.rating}\n"
-            f"Satisfacción:         {n.satisfaction}\n"
-            f"Num reseñas:          {n.num_reviews}\n"
-            f"Clases publicadas:    {n.num_published_lectures}\n"
-            f"Creado:               {n.created}\n"
-            f"Última actualización: {n.last_update_date}\n"
-            f"Duración:             {n.duration}\n"
-            f"ID instructor:        {n.instructors_id}\n"
-            f"Imagen:               {n.image}\n"
-            f"Reseñas positivas:    {n.positive_reviews}\n"
-            f"Reseñas negativas:    {n.negative_reviews}\n"
-            f"Reseñas neutrales:    {n.neutral_reviews}\n"
+        text = (
+        f"ID: {n.course_id}\n"
+        f"Satisfacción: {n.satisfaction}\n"
+        f"👍 {n.positive_reviews} | 👎 {n.negative_reviews} | 😐 {n.neutral_reviews}\n"
+        f"Lectures: {n.num_published_lectures}\n"
+        f"Fecha: {n.created}"
         )
-        self.update_result(info)
-
+        self.show_result(text)
+    
     def show_level(self):
         level = self.tree.get_level(self.tree.root, self.current_node)
-        self.update_result(f"Nivel del nodo: {level}")
-
-    def show_balance(self):
-        balance = self.tree.get_balance(self.current_node)
-        self.update_result(f"Factor de balanceo: {balance}")
+        self.show_result(f"Nivel del nodo: {level}")
 
     def show_parent(self):
         parent = self.tree.get_parent(self.tree.root, self.current_node)
+
         if parent:
-            self.update_result(f"Padre → ID: {parent.course_id} | Título: {parent.title}")
+            self.show_result(f"Padre: {parent.course_id}")
         else:
-            self.update_result("Este nodo es la raíz, no tiene padre")
+            self.show_result("No tiene padre (es la raíz)")
 
     def show_grandparent(self):
         grandparent = self.tree.get_grandparent(self.current_node)
-        if grandparent:
-            self.update_result(f"Abuelo → ID: {grandparent.course_id} | Título: {grandparent.title}")
-        else:
-            self.update_result("Este nodo no tiene abuelo")
 
+        if grandparent:
+            self.show_result(f"Abuelo: {grandparent.course_id}")
+        else:
+            self.show_result("No tiene abuelo")
+    
     def show_uncle(self):
         uncle = self.tree.get_uncle(self.current_node)
+
         if uncle:
-            self.update_result(f"Tío → ID: {uncle.course_id} | Título: {uncle.title}")
+            self.show_result(f"Tío: {uncle.course_id}")
         else:
-            self.update_result("Este nodo no tiene tío")
+            self.show_result("No tiene tío")
 
-    def update_result(self, text):
-        self.result_box.configure(state="normal")
-        self.result_box.delete("0.0", "end")
-        self.result_box.insert("0.0", text)
-        self.result_box.configure(state="disabled")
+    def show_balance(self):
+        balance = self.tree.get_balance(self.current_node)
+        self.show_result(f"Factor de balance: {balance}")
 
-    # ── Búsqueda por criterios ────────────────────────────────────────
+    def show_result(self, text):
+        if hasattr(self, "result_box"):
+            self.result_box.configure(state="normal")
+            self.result_box.delete("1.0", "end")
+            self.result_box.insert("end", str(text))
+            self.result_box.configure(state="disabled")
 
     def search_by_criteria(self):
-        self.clear_main()
-        frame = ctk.CTkFrame(self.main_frame)
-        frame.pack(fill="both", expand=True, padx=20, pady=20)
-        ctk.CTkLabel(frame, text="Búsqueda por criterios", font=("Arial", 22)).pack(pady=10)
+        root = self.tree.root
+        results = []
+        option = self.criteria_option.get()
 
-        criterios = [
-            ("A: Positivas > Negativas + Neutrales",
-             lambda: self.run_criteria(search_positive_reviews(self.tree.root))),
-            ("B: Fecha de creación posterior a...", self.criteria_b_form),
-            ("C: Clases en rango...",               self.criteria_c_form),
-            ("D: Reseñas sobre el promedio...",     self.criteria_d_form),
-        ]
-        for texto, comando in criterios:
-            ctk.CTkButton(frame, text=texto, command=comando)\
-                .pack(pady=6, fill="x", padx=30)
-        ctk.CTkButton(frame, text="Volver", command=self.create_main_menu).pack(pady=10)
+        if option == "Reseñas positivas > negativas + neutras":
+            results = search_positive_reviews(root)
 
-    def criteria_b_form(self):
-        self.clear_main()
-        frame = ctk.CTkFrame(self.main_frame)
-        frame.pack(expand=True)
-        ctk.CTkLabel(frame, text="Fecha posterior a (YYYY-MM-DD):").pack(pady=10)
-        entry = ctk.CTkEntry(frame, placeholder_text="2020-01-01")
-        entry.pack(pady=5)
-        ctk.CTkButton(frame, text="Buscar",
-                      command=lambda: self.run_criteria(
-                          search_by_date(self.tree.root, entry.get().strip())
-                      )).pack(pady=10)
-        ctk.CTkButton(frame, text="Volver", command=self.search_by_criteria).pack(pady=5)
+        elif option == "Cursos después de una fecha":
+            date = self.date_entry.get()
+            results = search_by_date(root, date)
 
-    def criteria_c_form(self):
-        self.clear_main()
-        frame = ctk.CTkFrame(self.main_frame)
-        frame.pack(expand=True)
-        ctk.CTkLabel(frame, text="Clases mínimas:").pack(pady=5)
-        min_entry = ctk.CTkEntry(frame, placeholder_text="10")
-        min_entry.pack(pady=5)
-        ctk.CTkLabel(frame, text="Clases máximas:").pack(pady=5)
-        max_entry = ctk.CTkEntry(frame, placeholder_text="100")
-        max_entry.pack(pady=5)
-        ctk.CTkButton(frame, text="Buscar",
-                      command=lambda: self.run_criteria(
-                          search_by_lectures_range(
-                              self.tree.root, int(min_entry.get()), int(max_entry.get())
-                          )
-                      )).pack(pady=10)
-        ctk.CTkButton(frame, text="Volver", command=self.search_by_criteria).pack(pady=5)
+        elif option == "Rango de número de clases":
+            min_l = int(self.min_lectures_entry.get())
+            max_l = int(self.max_lectures_entry.get())
+            results = search_by_lectures_range(root, min_l, max_l)
 
-    def criteria_d_form(self):
-        self.clear_main()
-        frame = ctk.CTkFrame(self.main_frame)
-        frame.pack(expand=True)
-        ctk.CTkLabel(frame, text="Tipo de reseña:").pack(pady=10)
-        tipo = ctk.CTkOptionMenu(frame, values=["positive", "negative", "neutral"])
-        tipo.pack(pady=5)
-        ctk.CTkButton(frame, text="Buscar",
-                      command=lambda: self.run_criteria(
-                          search_by_reviews_above_average(self.tree.root, tipo.get())
-                      )).pack(pady=10)
-        ctk.CTkButton(frame, text="Volver", command=self.search_by_criteria).pack(pady=5)
+        elif option == "Reseñas por encima del promedio":
+            review_type = self.review_type_option.get()
+            results = search_by_reviews_above_average(root, review_type)
+
+        self.show_nodes(results)
 
     def run_criteria(self, results):
         self.clear_main()
-        frame = ctk.CTkFrame(self.main_frame)
+        frame = ctk.CTkScrollableFrame(self.content)
         frame.pack(fill="both", expand=True, padx=20, pady=20)
-        ctk.CTkLabel(frame,
-                     text=f"Resultados: {len(results)} nodos encontrados",
-                     font=("Arial", 18)).pack(pady=10)
 
-        if not results:
-            ctk.CTkLabel(frame, text="No se encontraron resultados").pack(pady=20)
-        else:
-            textbox = ctk.CTkTextbox(frame)
-            textbox.pack(fill="both", expand=True, pady=10)
-            for node in results:
-                textbox.insert("end",
-                               f"ID: {node.course_id} | "
-                               f"Satisfacción: {node.satisfaction} | "
-                               f"Título: {node.title}\n")
-            textbox.configure(state="disabled")
-
-            ctk.CTkLabel(frame, text="Ingresa el ID para ver sus opciones:").pack()
-            id_entry = ctk.CTkEntry(frame)
-            id_entry.pack(pady=5)
-            ctk.CTkButton(frame, text="Seleccionar",
-                          command=lambda: self.select_node_from_results(
-                              int(id_entry.get()), results
-                          )).pack(pady=5)
-
-        ctk.CTkButton(frame, text="Volver", command=self.search_by_criteria).pack(pady=10)
-
-    def select_node_from_results(self, course_id, results):
         for node in results:
-            if node.course_id == course_id:
-                self.current_node = node
-                self.show_node_options()
-                return
-        messagebox.showerror("Error", "ID no encontrado en los resultados")
+            ctk.CTkLabel(frame,
+                         text=f"{node.course_id} - {node.title}").pack()
 
-    # ── Recorrido por niveles ─────────────────────────────────────────
+    def count_nodes(self, node):
+        if node is None:
+            return 0
+        return 1 + self.count_nodes(node.left) + self.count_nodes(node.right)
 
     def show_levels(self):
         self.clear_main()
         textbox = ctk.CTkTextbox(self.main_frame)
-        textbox.pack(fill="both", expand=True, padx=20, pady=20)
-        result = self.tree.level_order()
-        if not result:
-            textbox.insert("end", "El árbol está vacío")
-        else:
-            textbox.insert("end", "RECORRIDO POR NIVELES\n\n")
-            recorrido_lineal = []
-            for i, nivel in enumerate(result):
-                texto_nivel = " -> ".join(str(n) for n in nivel)
-                textbox.insert("end", f"Nivel {i}: {texto_nivel}\n")
-                recorrido_lineal.extend(nivel)
-            recorrido_str = " -> ".join(str(n) for n in recorrido_lineal)
-            textbox.insert("end", "\nRECORRIDO COMPLETO\n\n")
-            textbox.insert("end", recorrido_str)
-        textbox.configure(state="disabled")
+        textbox.pack(fill="both", expand=True)
 
-    # ── Visualizar árbol ──────────────────────────────────────────────
+        result = self.tree.level_order()
+        for i, nivel in enumerate(result):
+            texto = " -> ".join(str(n) for n in nivel)
+            textbox.insert("end", f"{texto}\n")
+
+    def show_nodes(self, nodes):
+        for widget in self.content.winfo_children():
+            if isinstance(widget, ctk.CTkScrollableFrame):
+                widget.destroy()
+        frame = ctk.CTkScrollableFrame(self.content, height=300)
+        frame.pack(fill="both", expand=True, padx=20, pady=10)
+        if not nodes:
+            ctk.CTkLabel(frame, text="No hay resultados").pack(pady=10)
+            return
+        for n in nodes:
+            text = f"ID: {n.course_id} | Sat: {n.satisfaction} | Lectures: {n.num_published_lectures}"
+            ctk.CTkLabel(frame, text=text, anchor="w").pack(fill="x", padx=10, pady=5)
+
+    def show_inorder(self):
+        result = self.tree.inorder()
+        self.show_result("\n".join(map(str, result)))
 
     def visualize(self):
         self.visualizer.visualize(self.tree.root)
@@ -425,32 +400,48 @@ class Interfaz:
 
     def show_tree_image(self):
         self.clear_main()
+
         try:
             image = Image.open("tree.png")
 
-            # Tomar el tamaño real del panel
-            self.main_frame.update_idletasks()
-            panel_w = self.main_frame.winfo_width()  - 40
-            panel_h = self.main_frame.winfo_height() - 80
+            container = ctk.CTkFrame(self.content)
+            container.pack(fill="both", expand=True, padx=20, pady=20)
 
-            # Escalar manteniendo proporción
-            img_w, img_h = image.size
-            ratio = min(panel_w / img_w, panel_h / img_h)
-            new_size = (int(img_w * ratio), int(img_h * ratio))
-            image = image.resize(new_size, Image.LANCZOS)  # LANCZOS = mejor calidad
+            canvas = ctk.CTkCanvas(container)
+            canvas.pack(side="left", fill="both", expand=True)
 
-            self.tree_img = ctk.CTkImage(light_image=image, size=new_size)
-            canvas = ctk.CTkFrame(self.main_frame)
-            canvas.pack(fill="both", expand=True)
-            ctk.CTkLabel(canvas, image=self.tree_img, text="").pack(expand=True)
+            scrollbar_y = ctk.CTkScrollbar(container, orientation="vertical", command=canvas.yview)
+            scrollbar_y.pack(side="right", fill="y")
 
-        except FileNotFoundError:
-            ctk.CTkLabel(self.main_frame,
-                        text="El árbol está vacío, inserta nodos primero")\
-                .pack(expand=True)
+            scrollbar_x = ctk.CTkScrollbar(self.content, orientation="horizontal", command=canvas.xview)
+            scrollbar_x.pack(fill="x")
 
-        ctk.CTkButton(self.main_frame, text="Volver",
-                    command=self.create_main_menu).pack(pady=10)
+            canvas.configure(yscrollcommand=scrollbar_y.set,
+                         xscrollcommand=scrollbar_x.set)
+
+            inner_frame = ctk.CTkFrame(canvas)
+            canvas.create_window((0, 0), window=inner_frame, anchor="nw")
+
+            max_width = 1000
+            max_height = 700
+            image.thumbnail((max_width, max_height))
+
+            img = ctk.CTkImage(light_image=image, size=image.size)
+
+            label = ctk.CTkLabel(inner_frame, image=img, text="")
+            label.pack()
+
+            self.tree_img = img
+
+            inner_frame.update_idletasks()
+            canvas.configure(scrollregion=canvas.bbox("all"))
+
+        except Exception as e:
+            print("ERROR:", e)
+            ctk.CTkLabel(self.content, text="Error al mostrar árbol").pack(pady=20)
+
+        ctk.CTkButton(self.content, text="Volver",
+                  command=self.create_main_menu).pack(pady=10)
 
     def run(self):
         self.root.mainloop()
