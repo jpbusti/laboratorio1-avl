@@ -178,8 +178,8 @@ class Interfaz:
             # Inserción AVL
             self.tree.root = self.tree.insert(self.tree.root, node)
 
-            CTkMessagebox(title="Éxito", message="Insertado", icon="check")
-
+            msg = CTkMessagebox(title="Éxito", message="Insertado", icon="check")
+            msg.get()
             self.visualize()
 
         except:
@@ -233,8 +233,8 @@ class Interfaz:
 
                 self.tree.delete_course(nodo.course_id, satisfaction)
 
-            CTkMessagebox(title="Éxito", message="Eliminado", icon="check")
-
+            msg =CTkMessagebox(title="Éxito", message="Eliminado", icon="check")
+            msg.get()
             self.visualize()
 
         except:
@@ -473,8 +473,10 @@ class Interfaz:
     # ---------- RECORRIDO ----------
 
     def show_levels(self):
+        if self.tree.root is None:
+            CTkMessagebox(title="Error", message="el arbol no tiene nodos", icon="cancel")
+            return
         self.clear_main()
-
         frame = ctk.CTkFrame(self.content)
         frame.pack(fill="both", expand=True, padx=20, pady=20)
 
@@ -544,6 +546,9 @@ class Interfaz:
     # ---------- VISUALIZACIÓN ----------
 
     def visualize(self):
+        if self.tree.root is None:
+            CTkMessagebox(title="Error", message="el arbol no tiene nodos", icon="cancel")
+            return
         self.visualizer.visualize(self.tree.root)
         self.show_tree_image()
 
