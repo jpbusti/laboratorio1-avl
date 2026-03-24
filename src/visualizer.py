@@ -4,6 +4,7 @@ class visualizer:
     def __init__(self):
         self.dot = None
 
+    # Obtiene balance del nodo
     def get_balance(self, node):
         if node is None:
             return 0
@@ -11,6 +12,7 @@ class visualizer:
         right_h = node.right.height if node.right else 0
         return left_h - right_h
 
+    # Obtiene color según balance
     def get_color(self, balance):
         if balance == 0:
             return "#48BB78"
@@ -19,14 +21,15 @@ class visualizer:
         else:
             return "#F56565"
 
+    # Añade nodos al árbol
     def add_nodes(self, node):
         if node is None:
             return
 
         balance = self.get_balance(node)
         color = self.get_color(balance)
-
-        label = f"{node.course_id}\nSat: {node.satisfaction}\nFB: {balance}"
+        title = node.title[:20] + "..." if len(node.title) > 20 else node.title
+        label = f"{node.course_id}\n {title}\nSat: {node.satisfaction}\nFB: {balance}"
 
         self.dot.node(
             str(id(node)),
@@ -55,6 +58,7 @@ class visualizer:
             )
             self.add_nodes(node.right)
 
+    # Genera imagen del árbol
     def visualize(self, root):
         self.dot = Digraph()
 

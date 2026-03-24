@@ -237,7 +237,7 @@ class AVLTree:
         if node is None:
             return result
         if level == 1:
-            result.append(node.course_id)
+            result.append(node)
         elif level > 1:
             self.print_level(node.left,  level - 1, result)
             self.print_level(node.right, level - 1, result)
