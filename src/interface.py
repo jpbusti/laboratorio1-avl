@@ -52,6 +52,10 @@ class Interfaz:
         self.create_sidebar()
         self.create_main_menu()
 
+        # Lista de nodos recientes
+        self.last_results = []
+        self.from_advanced_search = False
+
     # Crea el título superior
     def create_header(self):
         ctk.CTkLabel(self.header, text="Sistema de Cursos AVL",
@@ -327,6 +331,7 @@ class Interfaz:
 
         if node:
             self.current_node = node
+            self.from_advanced_search = False
             self.show_node_options()
         else:
             CTkMessagebox(title="Resultado", message="Nodo no encontrado", icon="info")
@@ -362,7 +367,14 @@ class Interfaz:
                       command=self.show_uncle).pack(pady=5)
 
         ctk.CTkButton(frame, text="Volver",
-                      command=self.search_form).pack(pady=10)
+              command=self.go_back_to_results).pack(pady=10)
+
+    # Volver a las últimas búsquedas
+    def go_back_to_results(self):
+        if self.from_advanced_search and self.last_results:
+            self.show_nodes(self.last_results)
+        else:
+            self.search_form()
 
     # Muestra información completa del nodo
     def show_full_info(self):
@@ -429,40 +441,82 @@ class Interfaz:
         results = []
         option = self.criteria_option.get()
 
-        if option == "Reseñas positivas > negativas + neutras":
-            results = search_positive_reviews(root)
+        try:
+            if option == "Reseñas positivas > negativas + neutras":
+                results = search_positive_reviews(root)
 
-        elif option == "Cursos después de una fecha":
-            date = self.date_entry.get()
-            results = search_by_date(root, date)
+            elif option == "Cursos después de una fecha":
+                if not hasattr(self, "date_entry"):
+                    raise Exception("Ingrese una fecha")
 
-        elif option == "Rango de número de clases":
-            min_l = int(self.min_lectures_entry.get())
-            max_l = int(self.max_lectures_entry.get())
-            results = search_by_lectures_range(root, min_l, max_l)
+                date = self.date_entry.get().strip()
+                if not date:
+                    raise Exception("Ingrese una fecha")
 
-        elif option == "Reseñas por encima del promedio":
-            review_type = self.review_type_option.get()
-            results = search_by_reviews_above_average(root, review_type)
+                results = search_by_date(root, date)
 
-        self.show_nodes(results)
+            elif option == "Rango de número de clases":
+                if not hasattr(self, "min_lectures_entry") or not hasattr(self, "max_lectures_entry"):
+                    raise Exception("Ingrese el rango")
 
-    # Muestra lista de nodos encontrados
+                min_l = self.min_lectures_entry.get().strip()
+                max_l = self.max_lectures_entry.get().strip()
+
+                if not min_l or not max_l:
+                    raise Exception("Complete ambos valores")
+
+                results = search_by_lectures_range(root, int(min_l), int(max_l))
+
+            elif option == "Reseñas por encima del promedio":
+                if not hasattr(self, "review_type_option"):
+                    raise Exception("Seleccione tipo de review")
+
+                review_type = self.review_type_option.get()
+                results = search_by_reviews_above_average(root, review_type)
+
+            self.last_results = results
+            self.from_advanced_search = True
+            self.show_nodes(results)
+
+        except:
+            CTkMessagebox(title="Error", message="Datos inválidos o incompletos", icon="cancel")
+    
+    # selecciona un nodo de la lista
+    def select_node_from_list(self, node):
+        self.current_node = node
+        self.show_node_options()
+
+    # crea un boton para seleccionar un nodo
     def show_nodes(self, nodes):
-        for widget in self.content.winfo_children():
-            if isinstance(widget, ctk.CTkScrollableFrame):
-                widget.destroy()
+        self.clear_main()
+
+        ctk.CTkLabel(self.content, text="Resultados",
+                 font=("Arial", 26, "bold")).pack(pady=10)
 
         frame = ctk.CTkScrollableFrame(self.content, height=300)
         frame.pack(fill="both", expand=True, padx=20, pady=10)
 
         if not nodes:
             ctk.CTkLabel(frame, text="No hay resultados").pack(pady=10)
-            return
+        else:
+            for n in nodes:
+                text = f"ID: {n.course_id} | Sat: {n.satisfaction} | Lectures: {n.num_published_lectures}"
 
-        for n in nodes:
-            text = f"ID: {n.course_id} | Sat: {n.satisfaction} | Lectures: {n.num_published_lectures}"
-            ctk.CTkLabel(frame, text=text, anchor="w").pack(fill="x", padx=10, pady=5)
+                btn = ctk.CTkButton(
+                frame,
+                text=text,
+                anchor="w",
+                height=40,
+                corner_radius=10,
+                fg_color="#2b2b2b",
+                hover_color="#3a3a3a",
+                command=lambda node=n: self.select_node_from_list(node)
+                )
+                btn.pack(fill="x", padx=10, pady=5)
+
+        # 🔥 BOTÓN PARA VOLVER A BUSCAR
+        ctk.CTkButton(self.content, text="Nueva búsqueda",
+                  command=self.search_form).pack(pady=15)
 
     # Cuenta nodos
     def count_nodes(self, node):
