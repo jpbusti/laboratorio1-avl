@@ -438,7 +438,10 @@ class Interfaz:
     # Búsquedas avanzadas
     def search_by_criteria(self):
         root = self.tree.root
+
+        # Guarda los resultados
         results = []
+        # Obtiene la opción seleccionada
         option = self.criteria_option.get()
 
         try:
@@ -447,28 +450,33 @@ class Interfaz:
 
             elif option == "Cursos después de una fecha":
                 if not hasattr(self, "date_entry"):
+                    # Si no hay entrada de fecha, muestra un mensaje
                     raise Exception("Ingrese una fecha")
 
                 date = self.date_entry.get().strip()
                 if not date:
+                    # Si no hay fecha, muestra un mensaje
                     raise Exception("Ingrese una fecha")
 
                 results = search_by_date(root, date)
 
             elif option == "Rango de número de clases":
                 if not hasattr(self, "min_lectures_entry") or not hasattr(self, "max_lectures_entry"):
+                    # Si no hay entradas de rango, muestra un mensaje
                     raise Exception("Ingrese el rango")
 
                 min_l = self.min_lectures_entry.get().strip()
                 max_l = self.max_lectures_entry.get().strip()
 
                 if not min_l or not max_l:
+                    # Si no hay valores, muestra un mensaje
                     raise Exception("Complete ambos valores")
 
                 results = search_by_lectures_range(root, int(min_l), int(max_l))
 
             elif option == "Reseñas por encima del promedio":
                 if not hasattr(self, "review_type_option"):
+                    # Si no hay opción de tipo de review, muestra un mensaje
                     raise Exception("Seleccione tipo de review")
 
                 review_type = self.review_type_option.get()
@@ -514,7 +522,7 @@ class Interfaz:
                 )
                 btn.pack(fill="x", padx=10, pady=5)
 
-        # 🔥 BOTÓN PARA VOLVER A BUSCAR
+        # BOTÓN PARA VOLVER A BUSCAR
         ctk.CTkButton(self.content, text="Nueva búsqueda",
                   command=self.search_form).pack(pady=15)
 
@@ -551,12 +559,13 @@ class Interfaz:
         textbox.insert("end", recorrido_text)
         textbox.configure(state="disabled")
 
-        # Parte visual
+        # Guarda los widgets para animar
         self.recorrido_widgets = []
 
         container = ctk.CTkFrame(frame)
         container.pack(pady=20)
 
+        # Dibuja los nodos por niveles (forma visual del árbol)
         for nivel in niveles:
             fila = ctk.CTkFrame(container)
             fila.pack(pady=5)
@@ -585,16 +594,23 @@ class Interfaz:
 
     # Animación paso a paso
     def animate_step(self, index):
+        # Cambia el color de los widgets
+        # Si no es el primer nodo, el anterior vuelve a color normal
         if index > 0:
             self.recorrido_widgets[index - 1].configure(fg_color="blue")
 
+        # Si aún hay nodos por recorrer
         if index < len(self.recorrido_widgets):
+            # Pinta el nodo actual en rojo
             self.recorrido_widgets[index].configure(fg_color="red")
+            # Llama a la misma función después de 600ms
             self.root.after(600, lambda: self.animate_step(index + 1))
 
     # Reinicia colores
     def reset_animation(self):
+        # Recorre todos los nodos visuales
         for widget in self.recorrido_widgets:
+            # Los pone en gris
             widget.configure(fg_color="gray")
 
     # ---------- VISUALIZACIÓN ----------
@@ -611,41 +627,54 @@ class Interfaz:
         self.clear_main()
 
         try:
+            # Abre imagen
             image = Image.open("tree.png")
 
             container = ctk.CTkFrame(self.content)
             container.pack(fill="both", expand=True, padx=20, pady=20)
 
+            # Crea canvas donde se uede hacer scroll
             canvas = ctk.CTkCanvas(container)
             canvas.pack(side="left", fill="both", expand=True)
 
+            # Scrollbar vertical
             scrollbar_y = ctk.CTkScrollbar(container, orientation="vertical", command=canvas.yview)
             scrollbar_y.pack(side="right", fill="y")
 
+            # Scrollbar horizontal
             scrollbar_x = ctk.CTkScrollbar(self.content, orientation="horizontal", command=canvas.xview)
             scrollbar_x.pack(fill="x")
 
+            # Configura scroll en el canvas
             canvas.configure(yscrollcommand=scrollbar_y.set,
                              xscrollcommand=scrollbar_x.set)
 
+            # Crea un frame para el canvas
             inner_frame = ctk.CTkFrame(canvas)
             canvas.create_window((0, 0), window=inner_frame, anchor="nw")
 
+            # Crea imagen de tamaño 1000x700
             image.thumbnail((1000, 700))
 
+            # Crea imagen de ctk
             img = ctk.CTkImage(light_image=image, size=image.size)
 
+            # muestra la imagen
             label = ctk.CTkLabel(inner_frame, image=img, text="")
             label.pack()
 
+            # Guarda la imagen
             self.tree_img = img
 
+            # Ajusta el tamaño del scroll
             inner_frame.update_idletasks()
             canvas.configure(scrollregion=canvas.bbox("all"))
 
         except:
+            # Si no se pudo mostrar la imagen, muestra un mensaje
             ctk.CTkLabel(self.content, text="Error al mostrar árbol").pack(pady=20)
 
+        # Botón para volver al menú principal
         ctk.CTkButton(self.content, text="Volver",
                       command=self.create_main_menu).pack(pady=10)
 
